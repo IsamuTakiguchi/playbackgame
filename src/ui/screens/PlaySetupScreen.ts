@@ -3,7 +3,7 @@ import { goTo, getState, setState, markPlayed } from "../../game/state";
 import { getRandomQuiz, incrementPlayCount } from "../../storage/quizRepo";
 import { decodeBlob } from "../../audio/decode";
 import { reverseAudioBuffer } from "../../audio/reverse";
-import { getCtx, play } from "../../audio/AudioEngine";
+import { getCtx, play, ensureRunning } from "../../audio/AudioEngine";
 import { earListen } from "../illustrations";
 
 /**
@@ -23,9 +23,31 @@ export async function PlaySetupScreen(): Promise<HTMLElement> {
     );
   }
 
-  // 逆再生バッファを用意して state に保持
-  const original = await decodeBlob(quiz.audio);
-  const reversed = reverseAudioBuffer(original, getCtx());
+  // 逆再生バッファを用意して state に保持。
+  // iOS では decode 前に context を running にしておく（固まり防止）。
+  let reversed: AudioBuffer;
+  try {
+    await ensureRunning();
+    const original = await decodeBlob(quiz.audio);
+    reversed = reverseAudioBuffer(original, getCtx());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return el(
+      "div",
+      { class: "screen" },
+      el("h2", {}, "音声を読み込めませんでした"),
+      el("p", { class: "status error" }, message),
+      el(
+        "div",
+        { class: "bottom-actions" },
+        el(
+          "button",
+          { class: "btn primary big", onclick: () => goTo("home") },
+          "← ホームに戻る",
+        ),
+      ),
+    );
+  }
   setState({ currentQuiz: quiz, reversedOriginal: reversed });
 
   let playCount = 0;

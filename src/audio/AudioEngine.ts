@@ -23,6 +23,29 @@ export function getCtx(): AudioContext {
   return ctx;
 }
 
+/**
+ * 最初のユーザー操作（タップ/クリック）の中で呼び、AudioContext を生成＋resume して
+ * 「アンロック」する。iOS Safari は操作内で resume しないと音が出ない/デコードが固まるため。
+ */
+export function unlockAudio(): void {
+  getCtx();
+}
+
+/**
+ * AudioContext が running になるまで待つ。decodeAudioData / 再生の前の保険。
+ * （resume はユーザー操作内で呼ばれている前提。ここでは完了を待つだけ。）
+ */
+export async function ensureRunning(): Promise<void> {
+  const c = getCtx();
+  if (c.state === "suspended") {
+    try {
+      await c.resume();
+    } catch {
+      /* resume 不可でも続行（デコード自体は可能なことが多い） */
+    }
+  }
+}
+
 /** いま鳴っている音を止める。 */
 export function stopPlayback(): void {
   if (currentSource) {

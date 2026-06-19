@@ -1,4 +1,4 @@
-import { getState, subscribe } from "../game/state";
+import { getState, subscribe, goTo } from "../game/state";
 import { clear } from "./dom";
 import { HomeScreen } from "./screens/HomeScreen";
 import { BankScreen } from "./screens/BankScreen";
@@ -19,27 +19,32 @@ export function startRouter(root: HTMLElement): void {
     const { screen } = getState();
 
     let node: HTMLElement;
-    switch (screen) {
-      case "home":
-        node = await HomeScreen();
-        break;
-      case "bank":
-        node = await BankScreen();
-        break;
-      case "create":
-        node = CreateQuizScreen();
-        break;
-      case "playSetup":
-        node = await PlaySetupScreen();
-        break;
-      case "mimic":
-        node = MimicScreen();
-        break;
-      case "reveal":
-        node = RevealScreen();
-        break;
-      default:
-        node = HomeScreenFallback();
+    try {
+      switch (screen) {
+        case "home":
+          node = await HomeScreen();
+          break;
+        case "bank":
+          node = await BankScreen();
+          break;
+        case "create":
+          node = CreateQuizScreen();
+          break;
+        case "playSetup":
+          node = await PlaySetupScreen();
+          break;
+        case "mimic":
+          node = MimicScreen();
+          break;
+        case "reveal":
+          node = RevealScreen();
+          break;
+        default:
+          node = HomeScreenFallback();
+      }
+    } catch (err) {
+      // 描画中の例外を無言で失敗させない（無反応の原因になる）
+      node = ErrorScreen(err);
     }
 
     // 非同期描画中に状態が変わっていたら破棄
@@ -56,4 +61,29 @@ function HomeScreenFallback(): HTMLElement {
   const div = document.createElement("div");
   div.textContent = "...";
   return div;
+}
+
+function ErrorScreen(err: unknown): HTMLElement {
+  const message = err instanceof Error ? err.message : String(err);
+  const screen = document.createElement("div");
+  screen.className = "screen";
+
+  const h = document.createElement("h2");
+  h.textContent = "おっと、エラーが発生しました";
+
+  const p = document.createElement("p");
+  p.className = "status error";
+  p.textContent = message;
+
+  const btn = document.createElement("button");
+  btn.className = "btn primary big";
+  btn.textContent = "← ホームに戻る";
+  btn.addEventListener("click", () => goTo("home"));
+
+  const actions = document.createElement("div");
+  actions.className = "bottom-actions";
+  actions.append(btn);
+
+  screen.append(h, p, actions);
+  return screen;
 }
