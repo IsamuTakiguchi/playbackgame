@@ -71,6 +71,7 @@ export async function PlaySetupScreen(): Promise<HTMLElement> {
       { class: "muted" },
       "下のボタンで逆再生を聞き、その音を口でマネする練習をします。準備ができたら録音へ。",
     ),
-    el("div", { class: "stack" }, listenBtn, counter, nextBtn),
+    el("div", { class: "stack" }, listenBtn, counter),
+    el("div", { class: "bottom-actions" }, nextBtn),
   );
 }

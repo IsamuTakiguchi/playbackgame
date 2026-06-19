@@ -34,7 +34,7 @@ export function MimicScreen(): HTMLElement {
 
   const afterRecord = el(
     "div",
-    { class: "stack", hidden: !mimic },
+    { class: "bottom-actions", hidden: !mimic },
     playMimic,
     revealBtn,
   );

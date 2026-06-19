@@ -80,10 +80,10 @@ export function RevealScreen(): HTMLElement {
     el("div", { class: "stack" }, revealAnswerBtn, answerBox),
     el(
       "div",
-      { class: "row spread" },
+      { class: "bottom-actions" },
       el(
         "button",
-        { class: "btn primary", onclick: () => goTo("playSetup") },
+        { class: "btn primary big", onclick: () => goTo("playSetup") },
         "➡ 次のお題",
       ),
       el(
