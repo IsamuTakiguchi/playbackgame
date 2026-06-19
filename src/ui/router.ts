@@ -3,6 +3,8 @@ import { clear } from "./dom";
 import { HomeScreen } from "./screens/HomeScreen";
 import { BankScreen } from "./screens/BankScreen";
 import { CreateQuizScreen } from "./screens/CreateQuizScreen";
+import { ModeSelectScreen } from "./screens/ModeSelectScreen";
+import { PickQuizScreen } from "./screens/PickQuizScreen";
 import { PlaySetupScreen } from "./screens/PlaySetupScreen";
 import { MimicScreen } from "./screens/MimicScreen";
 import { RevealScreen } from "./screens/RevealScreen";
@@ -29,6 +31,12 @@ export function startRouter(root: HTMLElement): void {
           break;
         case "create":
           node = CreateQuizScreen();
+          break;
+        case "modeSelect":
+          node = ModeSelectScreen();
+          break;
+        case "pick":
+          node = await PickQuizScreen();
           break;
         case "playSetup":
           node = await PlaySetupScreen();

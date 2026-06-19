@@ -12,7 +12,7 @@ export async function HomeScreen(): Promise<HTMLElement> {
     {
       class: "btn primary big",
       disabled: count === 0,
-      onclick: () => goTo("playSetup"),
+      onclick: () => goTo("modeSelect"),
     },
     "▶ ゲームを始める",
   );

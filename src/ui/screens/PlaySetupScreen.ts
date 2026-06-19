@@ -1,6 +1,6 @@
 import { el } from "../dom";
 import { goTo, getState, patch, markPlayed } from "../../game/state";
-import { getRandomQuiz, incrementPlayCount } from "../../storage/quizRepo";
+import { getRandomQuiz, getQuiz, incrementPlayCount } from "../../storage/quizRepo";
 import { decodeBlob } from "../../audio/decode";
 import { reverseAudioBuffer } from "../../audio/reverse";
 import { getCtx, play, ensureRunning } from "../../audio/AudioEngine";
@@ -12,7 +12,12 @@ import { earListen } from "../illustrations";
  */
 export async function PlaySetupScreen(): Promise<HTMLElement> {
   const state = getState();
-  const quiz = await getRandomQuiz(state.playedIds);
+  // 選択モードなら選ばれた1問、それ以外はランダム。
+  const quiz = state.selectedId
+    ? await getQuiz(state.selectedId)
+    : await getRandomQuiz(state.playedIds);
+  // 選択IDは消費済みにする（描画中なので notify を伴わない patch）。
+  patch({ selectedId: undefined });
 
   if (!quiz) {
     return el(

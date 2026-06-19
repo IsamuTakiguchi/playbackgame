@@ -21,12 +21,18 @@ export type Screen =
   | "home"
   | "bank"
   | "create"
+  | "modeSelect"
+  | "pick"
   | "playSetup"
   | "mimic"
   | "reveal";
 
+export type PlayMode = "random" | "select";
+
 export interface GameState {
   screen: Screen;
+  playMode?: PlayMode;
+  selectedId?: string;
   currentQuiz?: Quiz;
   reversedOriginal?: AudioBuffer;
   mimicBuffer?: AudioBuffer;

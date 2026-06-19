@@ -110,7 +110,10 @@ export function RevealScreen(): HTMLElement {
       { class: "bottom-actions" },
       el(
         "button",
-        { class: "btn primary big", onclick: () => goTo("playSetup") },
+        {
+          class: "btn primary big",
+          onclick: () => goTo(state.playMode === "select" ? "pick" : "playSetup"),
+        },
         "➡ 次のお題",
       ),
       el(

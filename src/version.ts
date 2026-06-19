@@ -1,2 +1,2 @@
 // ビルド識別用。キャッシュで古い版を見ていないかの確認に使う。
-export const APP_VERSION = "2026.06.19-5";
+export const APP_VERSION = "2026.06.19-6";
