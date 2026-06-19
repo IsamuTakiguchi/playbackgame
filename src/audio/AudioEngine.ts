@@ -150,16 +150,3 @@ export function play(buffer: AudioBuffer): Promise<void> {
     }
   });
 }
-
-/** 動作確認用のテストトーン（440Hz, 約0.4秒）。 */
-export function makeTestTone(): AudioBuffer {
-  const c = getCtx();
-  const sr = c.sampleRate;
-  const len = Math.floor(sr * 0.4);
-  const buf = c.createBuffer(1, len, sr);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) {
-    data[i] = Math.sin((2 * Math.PI * 440 * i) / sr) * 0.3;
-  }
-  return buf;
-}

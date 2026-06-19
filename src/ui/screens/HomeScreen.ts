@@ -2,7 +2,6 @@ import { el } from "../dom";
 import { goTo } from "../../game/state";
 import { countQuizzes } from "../../storage/quizRepo";
 import { micIllustration } from "../illustrations";
-import { play, makeTestTone } from "../../audio/AudioEngine";
 import { APP_VERSION } from "../../version";
 
 export async function HomeScreen(): Promise<HTMLElement> {
@@ -44,20 +43,6 @@ export async function HomeScreen(): Promise<HTMLElement> {
       count === 0
         ? "まずはお題を作りましょう（0 問）"
         : `ストック: ${count} 問`,
-    ),
-    el(
-      "div",
-      { class: "row", style: "justify-content:center;margin-top:8px" },
-      el(
-        "button",
-        {
-          class: "btn ghost small",
-          onclick: () => {
-            void play(makeTestTone());
-          },
-        },
-        "🔔 音テスト",
-      ),
     ),
     el("p", { class: "muted small", style: "text-align:center;opacity:0.6" }, `ver ${APP_VERSION}`),
   );
