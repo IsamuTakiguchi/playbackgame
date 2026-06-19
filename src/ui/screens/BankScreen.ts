@@ -58,21 +58,7 @@ function topBar(): HTMLElement {
 }
 
 function quizRow(q: QuizMeta): HTMLElement {
-  let revealed = false;
-  const answerEl = el("span", { class: "answer hidden" }, "（タップで表示）");
-
-  const toggle = el(
-    "button",
-    {
-      class: "btn ghost small",
-      onclick: () => {
-        revealed = !revealed;
-        answerEl.textContent = revealed ? q.answer : "（タップで表示）";
-        answerEl.classList.toggle("hidden", !revealed);
-      },
-    },
-    "👁",
-  );
+  const answerEl = el("span", { class: "answer" }, q.answer);
 
   const playOriginal = el(
     "button",
@@ -124,12 +110,7 @@ function quizRow(q: QuizMeta): HTMLElement {
     el(
       "div",
       { class: "quiz-main" },
-      el(
-        "div",
-        { class: "row" },
-        toggle,
-        answerEl,
-      ),
+      answerEl,
       el(
         "div",
         { class: "muted small" },
