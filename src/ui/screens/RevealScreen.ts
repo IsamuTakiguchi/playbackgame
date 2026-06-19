@@ -3,6 +3,7 @@ import { goTo, getState, resetRound } from "../../game/state";
 import { reverseAudioBuffer } from "../../audio/reverse";
 import { getCtx, play } from "../../audio/AudioEngine";
 import { audioPlayButton } from "../components/AudioPlayer";
+import { sparkles } from "../illustrations";
 
 /**
  * 仕上げ画面。マネ音声を逆再生して再生する（うまくいけば元の言葉に聞こえる）。
@@ -65,6 +66,7 @@ export function RevealScreen(): HTMLElement {
   return el(
     "div",
     { class: "screen reveal" },
+    el("div", { class: "hero" }, sparkles()),
     el("h2", {}, "答え合わせ"),
     el(
       "p",

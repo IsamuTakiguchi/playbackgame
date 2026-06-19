@@ -46,3 +46,13 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 export function clear(node: HTMLElement): void {
   node.replaceChildren();
 }
+
+/**
+ * 自前のインラインSVG文字列を要素化する。装飾イラスト用。
+ * 外部入力は渡さない前提（XSS懸念なし）。
+ */
+export function svgEl(markup: string): SVGElement {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = markup.trim();
+  return tpl.content.firstElementChild as SVGElement;
+}

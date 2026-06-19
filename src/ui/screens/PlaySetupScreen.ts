@@ -4,6 +4,7 @@ import { getRandomQuiz, incrementPlayCount } from "../../storage/quizRepo";
 import { decodeBlob } from "../../audio/decode";
 import { reverseAudioBuffer } from "../../audio/reverse";
 import { getCtx, play } from "../../audio/AudioEngine";
+import { earListen } from "../illustrations";
 
 /**
  * 出題者向け。ランダムに 1 問選び、逆再生したオリジナルを聞かせる。
@@ -65,6 +66,7 @@ export async function PlaySetupScreen(): Promise<HTMLElement> {
       el("button", { class: "btn ghost", onclick: () => goTo("home") }, "← やめる"),
     ),
     el("div", { class: "warning" }, "⚠ 回答者は画面を見ないでください（出題者のみ操作）"),
+    el("div", { class: "hero" }, earListen()),
     el("h2", {}, "出題者: 逆再生を聞いてマネしよう"),
     el(
       "p",

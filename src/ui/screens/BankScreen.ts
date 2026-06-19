@@ -9,13 +9,22 @@ import type { QuizMeta } from "../../game/types";
 import { decodeBlob } from "../../audio/decode";
 import { reverseAudioBuffer } from "../../audio/reverse";
 import { getCtx, play, stopPlayback } from "../../audio/AudioEngine";
+import { emptyMic } from "../illustrations";
 
 export async function BankScreen(): Promise<HTMLElement> {
   const quizzes = await listQuizzes();
 
   const list = el("div", { class: "quiz-list" });
   if (quizzes.length === 0) {
-    list.append(el("p", { class: "muted" }, "まだお題がありません。"));
+    list.append(
+      el(
+        "div",
+        { class: "empty-state" },
+        emptyMic(),
+        el("p", {}, "まだお題がありません。"),
+        el("p", { class: "small" }, "「＋ 新規作成」で最初の1問を録音しよう！"),
+      ),
+    );
   } else {
     for (const q of quizzes) {
       list.append(quizRow(q));

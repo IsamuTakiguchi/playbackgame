@@ -1,6 +1,7 @@
 import { el } from "../dom";
 import { goTo } from "../../game/state";
 import { countQuizzes } from "../../storage/quizRepo";
+import { micIllustration } from "../illustrations";
 
 export async function HomeScreen(): Promise<HTMLElement> {
   const count = await countQuizzes();
@@ -18,6 +19,7 @@ export async function HomeScreen(): Promise<HTMLElement> {
   return el(
     "div",
     { class: "screen home" },
+    el("div", { class: "hero" }, micIllustration()),
     el("h1", {}, "逆再生ゲーム"),
     el(
       "p",
@@ -29,7 +31,7 @@ export async function HomeScreen(): Promise<HTMLElement> {
       { class: "stack" },
       el(
         "button",
-        { class: "btn big", onclick: () => goTo("bank") },
+        { class: "btn accent big", onclick: () => goTo("bank") },
         "🎙 お題を作る / 管理",
       ),
       playBtn,

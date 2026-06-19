@@ -3,6 +3,7 @@ import { goTo, getState, setState } from "../../game/state";
 import { recordButton } from "../components/RecordButton";
 import { audioPlayButton } from "../components/AudioPlayer";
 import { play } from "../../audio/AudioEngine";
+import { speechBubble } from "../illustrations";
 
 /**
  * 出題者が「逆再生のマネ」を録音する画面。
@@ -72,6 +73,7 @@ export function MimicScreen(): HTMLElement {
         "← 戻る",
       ),
     ),
+    el("div", { class: "hero" }, speechBubble()),
     el("h2", {}, "マネを録音"),
     el(
       "p",

@@ -7,6 +7,7 @@ import { getCtx } from "../../audio/AudioEngine";
 import { decodeBlob } from "../../audio/decode";
 import { trimSilence } from "../../audio/trim";
 import { addQuiz } from "../../storage/quizRepo";
+import { micIllustration } from "../illustrations";
 import type { QuizSource } from "../../game/types";
 
 export function CreateQuizScreen(): HTMLElement {
@@ -122,6 +123,7 @@ export function CreateQuizScreen(): HTMLElement {
         "← 戻る",
       ),
     ),
+    el("div", { class: "hero" }, micIllustration()),
     el("h2", {}, "お題を作る"),
     el("p", { class: "muted" }, "元の言葉を録音するか、音声ファイルを読み込みます。"),
 
