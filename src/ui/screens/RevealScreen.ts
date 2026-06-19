@@ -1,7 +1,7 @@
 import { el } from "../dom";
 import { goTo, getState, resetRound } from "../../game/state";
 import { reverseAudioBuffer } from "../../audio/reverse";
-import { getCtx, play } from "../../audio/AudioEngine";
+import { getCtx } from "../../audio/AudioEngine";
 import { audioPlayButton } from "../components/AudioPlayer";
 import { sparkles } from "../illustrations";
 
@@ -26,6 +26,43 @@ export function RevealScreen(): HTMLElement {
   // マネの逆再生（＝出題者の発声を元に戻したもの）
   const reversedMimic = reverseAudioBuffer(mimic, getCtx());
 
+  // 元の順再生（オリジナルそのまま）= 逆再生した元音声をもう一度反転すると順方向に戻る
+  let forwardOriginal: AudioBuffer | undefined;
+  const getForwardOriginal = (): AudioBuffer | undefined => {
+    if (!forwardOriginal && state.reversedOriginal) {
+      forwardOriginal = reverseAudioBuffer(state.reversedOriginal, getCtx());
+    }
+    return forwardOriginal;
+  };
+
+  // ヒント（ボタンで開く）
+  const hintText = el("p", { class: "muted", hidden: true });
+  const hintBtn =
+    quiz.hint != null && quiz.hint !== ""
+      ? el(
+          "button",
+          {
+            class: "btn",
+            onclick: () => {
+              hintText.hidden = false;
+              hintText.textContent = `ヒント: ${quiz.hint}`;
+            },
+          },
+          "💡 ヒント",
+        )
+      : null;
+
+  // 元の順再生（正解表示後に出す）
+  const playOriginalForward = audioPlayButton(
+    "▶ 元の順再生",
+    getForwardOriginal,
+  );
+  const forwardWrap = el(
+    "div",
+    { hidden: true },
+    ...(state.reversedOriginal ? [playOriginalForward] : []),
+  );
+
   const answerBox = el("div", { class: "answer-box", hidden: true });
   const revealAnswerBtn = el(
     "button",
@@ -33,14 +70,12 @@ export function RevealScreen(): HTMLElement {
       class: "btn",
       onclick: () => {
         answerBox.hidden = false;
-        const children: Node[] = [
+        answerBox.replaceChildren(
           el("p", { class: "answer-label" }, "正解"),
           el("p", { class: "answer-text" }, quiz.answer),
-        ];
-        if (quiz.hint) {
-          children.push(el("p", { class: "muted" }, `ヒント: ${quiz.hint}`));
-        }
-        answerBox.replaceChildren(...children);
+        );
+        // 正解と一緒に「元の順再生」を出す（順再生＝答えが聞こえるため）
+        forwardWrap.hidden = false;
       },
     },
     "✅ 正解を表示",
@@ -50,17 +85,6 @@ export function RevealScreen(): HTMLElement {
     "▶ 出題者の逆再生（答え合わせ）",
     () => reversedMimic,
     { class: "primary big" },
-  );
-
-  const playOriginalReversed = el(
-    "button",
-    {
-      class: "btn",
-      onclick: async () => {
-        if (state.reversedOriginal) await play(state.reversedOriginal);
-      },
-    },
-    "🔁 元の逆再生（お手本）",
   );
 
   return el(
@@ -77,9 +101,10 @@ export function RevealScreen(): HTMLElement {
       "div",
       { class: "card" },
       playMimicReversed,
-      el("div", { class: "row" }, playOriginalReversed),
+      ...(hintBtn ? [el("div", { class: "row" }, hintBtn)] : []),
+      hintText,
     ),
-    el("div", { class: "stack" }, revealAnswerBtn, answerBox),
+    el("div", { class: "stack" }, revealAnswerBtn, answerBox, forwardWrap),
     el(
       "div",
       { class: "bottom-actions" },
