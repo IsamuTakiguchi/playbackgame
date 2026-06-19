@@ -13,6 +13,7 @@ interface Attrs {
   hidden?: boolean;
   href?: string;
   download?: string;
+  style?: string;
   [key: `data-${string}`]: string | undefined;
   onclick?: (e: MouseEvent) => void;
   oninput?: (e: Event) => void;

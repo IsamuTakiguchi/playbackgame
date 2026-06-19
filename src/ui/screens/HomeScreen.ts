@@ -2,6 +2,7 @@ import { el } from "../dom";
 import { goTo } from "../../game/state";
 import { countQuizzes } from "../../storage/quizRepo";
 import { micIllustration } from "../illustrations";
+import { APP_VERSION } from "../../version";
 
 export async function HomeScreen(): Promise<HTMLElement> {
   const count = await countQuizzes();
@@ -43,5 +44,6 @@ export async function HomeScreen(): Promise<HTMLElement> {
         ? "まずはお題を作りましょう（0 問）"
         : `ストック: ${count} 問`,
     ),
+    el("p", { class: "muted small", style: "text-align:center;opacity:0.6" }, `ver ${APP_VERSION}`),
   );
 }

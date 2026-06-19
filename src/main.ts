@@ -3,6 +3,29 @@ import { startRouter } from "./ui/router";
 import { confettiLayer } from "./ui/illustrations";
 import { unlockAudio } from "./audio/AudioEngine";
 
+// 画面外で起きたエラーも必ず画面に表示する（スマホはコンソールが見えないため）
+function showFatal(msg: string): void {
+  let banner = document.getElementById("fatal-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "fatal-banner";
+    banner.style.cssText =
+      "position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#ff5d8f;color:#fff;" +
+      "padding:12px 14px;font:14px/1.5 system-ui,sans-serif;white-space:pre-wrap;" +
+      "max-height:50vh;overflow:auto;";
+    document.body.appendChild(banner);
+  }
+  banner.textContent = "⚠ エラー: " + msg + "\n(この文面を伝えてください)";
+}
+
+window.addEventListener("error", (e) => {
+  showFatal(e.message || String((e as ErrorEvent).error) || "unknown error");
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const reason = (e as PromiseRejectionEvent).reason;
+  showFatal("Promise: " + (reason?.message || String(reason)));
+});
+
 // 画面をまたいで残る背景の紙吹雪レイヤー
 document.body.prepend(confettiLayer());
 
