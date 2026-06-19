@@ -1,5 +1,5 @@
 import { el } from "../dom";
-import { goTo, getState, setState, markPlayed } from "../../game/state";
+import { goTo, getState, patch, markPlayed } from "../../game/state";
 import { getRandomQuiz, incrementPlayCount } from "../../storage/quizRepo";
 import { decodeBlob } from "../../audio/decode";
 import { reverseAudioBuffer } from "../../audio/reverse";
@@ -48,7 +48,9 @@ export async function PlaySetupScreen(): Promise<HTMLElement> {
       ),
     );
   }
-  setState({ currentQuiz: quiz, reversedOriginal: reversed });
+  // 描画中なので notify を伴う setState は使わない（再描画ループになる）。
+  // 通知なしの patch で状態だけ保存する。
+  patch({ currentQuiz: quiz, reversedOriginal: reversed });
 
   let playCount = 0;
   const counter = el("p", { class: "muted small" }, "再生回数: 0");
