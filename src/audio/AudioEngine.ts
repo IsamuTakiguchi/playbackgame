@@ -1,13 +1,15 @@
+import { encodeWav } from "./encode-wav";
+
 /**
- * AudioContext を 1 つだけ持つシングルトン。
+ * 音声エンジン。
  *
- * - ブラウザはユーザー操作前の音声を禁止するため、最初のユーザー操作で生成する。
- * - 再生・録音の入口ごとに resume() する。
- * - AudioBufferSourceNode は使い捨てなので、再生のたびに生成する。
+ * - デコード/逆再生（バッファ処理）には AudioContext を使う。
+ * - **出力（再生）は HTMLAudioElement** を使う。iOS Safari の WebAudio 出力は
+ *   着信音(リンガー)音量・消音スイッチに紐づいて無音になりやすいが、<audio> は
+ *   メディア音量で鳴り消音スイッチも無視するため、確実に音が出る。
  */
 
 let ctx: AudioContext | null = null;
-let currentSource: AudioBufferSourceNode | null = null;
 
 export function getCtx(): AudioContext {
   if (!ctx) {
@@ -23,28 +25,55 @@ export function getCtx(): AudioContext {
   return ctx;
 }
 
+/** 出力用の共有 <audio> 要素。 */
+let audioEl: HTMLAudioElement | null = null;
+let currentUrl: string | null = null;
+let currentResolve: (() => void) | null = null;
+
+function getAudioEl(): HTMLAudioElement {
+  if (!audioEl) {
+    audioEl = new Audio();
+    audioEl.setAttribute("playsinline", "");
+    audioEl.preload = "auto";
+  }
+  return audioEl;
+}
+
 /**
- * 最初のユーザー操作（タップ/クリック）の中で呼び、AudioContext を生成＋resume し、
- * さらに「無音バッファを1回再生」して iOS Safari の音声出力を解錠する。
- * iOS は resume だけでは出力が解錠されないことがあるため、この空再生が要。
+ * 最初のユーザー操作（タップ/クリック）の中で呼び、音声を「アンロック」する。
+ * - AudioContext を生成＋resume（decode 用）。
+ * - <audio> をジェスチャ内で一度 play→pause して温める（iOS 対策）。
  */
 export function unlockAudio(): void {
   const c = getCtx();
   if (c.state === "suspended") void c.resume();
   try {
-    const buffer = c.createBuffer(1, 1, 22050);
-    const src = c.createBufferSource();
-    src.buffer = buffer;
-    src.connect(c.destination);
-    src.start(0);
+    const el = getAudioEl();
+    // 無音の極小 WAV を一瞬再生して <audio> を解錠
+    const silent = c.createBuffer(1, 2205, 22050);
+    const url = URL.createObjectURL(encodeWav(silent));
+    el.src = url;
+    el.muted = true;
+    const p = el.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        el.pause();
+        el.muted = false;
+        URL.revokeObjectURL(url);
+      }).catch(() => {
+        el.muted = false;
+        URL.revokeObjectURL(url);
+      });
+    } else {
+      el.muted = false;
+    }
   } catch {
-    /* 解錠の空再生に失敗しても致命ではない */
+    /* 解錠失敗は致命ではない */
   }
 }
 
 /**
- * AudioContext が running になるまで待つ。decodeAudioData / 再生の前の保険。
- * （resume はユーザー操作内で呼ばれている前提。ここでは完了を待つだけ。）
+ * AudioContext が running になるまで待つ。decodeAudioData の前の保険。
  */
 export async function ensureRunning(): Promise<void> {
   const c = getCtx();
@@ -52,50 +81,85 @@ export async function ensureRunning(): Promise<void> {
     try {
       await c.resume();
     } catch {
-      /* resume 不可でも続行（デコード自体は可能なことが多い） */
+      /* resume 不可でも続行 */
     }
   }
 }
 
-/** いま鳴っている音を止める。 */
+/** いま鳴っている音を止める。保留中の再生 Promise も解決する。 */
 export function stopPlayback(): void {
-  if (currentSource) {
+  if (audioEl) {
     try {
-      currentSource.stop();
+      audioEl.pause();
+      audioEl.currentTime = 0;
     } catch {
-      /* 既に停止済みなら無視 */
+      /* noop */
     }
-    currentSource.disconnect();
-    currentSource = null;
+  }
+  if (currentUrl) {
+    URL.revokeObjectURL(currentUrl);
+    currentUrl = null;
+  }
+  if (currentResolve) {
+    const r = currentResolve;
+    currentResolve = null;
+    r();
   }
 }
 
 /**
- * AudioBuffer を再生する。再生完了 or 中断で解決する Promise を返す。
- * 新しい再生を始めると前の再生は止める（同時再生しない）。
+ * AudioBuffer を WAV 化して <audio> で再生する。
+ * 再生完了 or 停止で解決する Promise を返す。
  */
-export async function play(buffer: AudioBuffer): Promise<void> {
-  const context = getCtx();
-  // iOS 対策: 再生前に running を保証してから start する（ユーザー操作内で呼ばれる）。
-  if (context.state === "suspended") {
-    try {
-      await context.resume();
-    } catch {
-      /* resume 不可でも続行 */
-    }
-  }
+export function play(buffer: AudioBuffer): Promise<void> {
   stopPlayback();
 
-  return new Promise<void>((resolve) => {
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(context.destination);
-    source.onended = () => {
-      source.disconnect();
-      if (currentSource === source) currentSource = null;
-      resolve();
+  const el = getAudioEl();
+  el.muted = false;
+  const blob = encodeWav(buffer);
+  const url = URL.createObjectURL(blob);
+  currentUrl = url;
+  el.src = url;
+
+  return new Promise<void>((resolve, reject) => {
+    currentResolve = resolve;
+
+    const cleanup = () => {
+      el.removeEventListener("ended", onEnded);
+      if (currentUrl === url) {
+        URL.revokeObjectURL(url);
+        currentUrl = null;
+      }
     };
-    currentSource = source;
-    source.start();
+    const onEnded = () => {
+      cleanup();
+      if (currentResolve === resolve) {
+        currentResolve = null;
+        resolve();
+      }
+    };
+    el.addEventListener("ended", onEnded);
+
+    const p = el.play();
+    if (p && typeof p.then === "function") {
+      p.catch((e: unknown) => {
+        cleanup();
+        if (currentResolve === resolve) currentResolve = null;
+        reject(e instanceof Error ? e : new Error(String(e)));
+      });
+    }
   });
+}
+
+/** 動作確認用のテストトーン（440Hz, 約0.4秒）。 */
+export function makeTestTone(): AudioBuffer {
+  const c = getCtx();
+  const sr = c.sampleRate;
+  const len = Math.floor(sr * 0.4);
+  const buf = c.createBuffer(1, len, sr);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    data[i] = Math.sin((2 * Math.PI * 440 * i) / sr) * 0.3;
+  }
+  return buf;
 }
