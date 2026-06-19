@@ -29,8 +29,18 @@ window.addEventListener("unhandledrejection", (e) => {
 // 画面をまたいで残る背景の紙吹雪レイヤー
 document.body.prepend(confettiLayer());
 
-// 最初のタップで AudioContext をアンロック（iOS Safari 対策）
-document.addEventListener("pointerdown", () => unlockAudio(), { once: true });
+// 最初のユーザー操作で AudioContext をアンロック（iOS Safari 対策）。
+// touchend/pointerdown/mousedown/click のどれか最初の1回で実行し、全リスナ解除。
+const UNLOCK_EVENTS = ["touchend", "pointerdown", "mousedown", "click", "keydown"];
+function onFirstGesture(): void {
+  unlockAudio();
+  for (const ev of UNLOCK_EVENTS) {
+    document.removeEventListener(ev, onFirstGesture);
+  }
+}
+for (const ev of UNLOCK_EVENTS) {
+  document.addEventListener(ev, onFirstGesture, { passive: true });
+}
 
 const root = document.getElementById("app");
 if (root) {

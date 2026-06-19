@@ -24,11 +24,22 @@ export function getCtx(): AudioContext {
 }
 
 /**
- * 最初のユーザー操作（タップ/クリック）の中で呼び、AudioContext を生成＋resume して
- * 「アンロック」する。iOS Safari は操作内で resume しないと音が出ない/デコードが固まるため。
+ * 最初のユーザー操作（タップ/クリック）の中で呼び、AudioContext を生成＋resume し、
+ * さらに「無音バッファを1回再生」して iOS Safari の音声出力を解錠する。
+ * iOS は resume だけでは出力が解錠されないことがあるため、この空再生が要。
  */
 export function unlockAudio(): void {
-  getCtx();
+  const c = getCtx();
+  if (c.state === "suspended") void c.resume();
+  try {
+    const buffer = c.createBuffer(1, 1, 22050);
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    src.connect(c.destination);
+    src.start(0);
+  } catch {
+    /* 解錠の空再生に失敗しても致命ではない */
+  }
 }
 
 /**
@@ -63,8 +74,16 @@ export function stopPlayback(): void {
  * AudioBuffer を再生する。再生完了 or 中断で解決する Promise を返す。
  * 新しい再生を始めると前の再生は止める（同時再生しない）。
  */
-export function play(buffer: AudioBuffer): Promise<void> {
+export async function play(buffer: AudioBuffer): Promise<void> {
   const context = getCtx();
+  // iOS 対策: 再生前に running を保証してから start する（ユーザー操作内で呼ばれる）。
+  if (context.state === "suspended") {
+    try {
+      await context.resume();
+    } catch {
+      /* resume 不可でも続行 */
+    }
+  }
   stopPlayback();
 
   return new Promise<void>((resolve) => {
